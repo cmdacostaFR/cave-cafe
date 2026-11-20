@@ -335,6 +335,7 @@ const CaveDB = (function() {
                 id: generateId(),
                 cafeId: cafeId,
                 dateDegustation: new Date().toISOString(),
+                infusion: degustationData.infusion || 'Moka',
                 acidite: degustationData.acidite || null,
                 amertume: degustationData.amertume || null,
                 corps: degustationData.corps || null,
@@ -350,6 +351,33 @@ const CaveDB = (function() {
             
             request.onsuccess = () => resolve(degustation);
             request.onerror = () => reject(new Error('Failed to create degustation'));
+        });
+    }
+
+    /**
+     * Update a degustation
+     */
+    function updateDegustation(degustation) {
+        return new Promise((resolve, reject) => {
+            const store = getStore(STORES.DEGUSTATIONS, 'readwrite');
+            
+            const request = store.put(degustation);
+            
+            request.onsuccess = () => resolve(degustation);
+            request.onerror = () => reject(new Error('Failed to update degustation'));
+        });
+    }
+
+    /**
+     * Get a degustation by ID
+     */
+    function getDegustation(id) {
+        return new Promise((resolve, reject) => {
+            const store = getStore(STORES.DEGUSTATIONS);
+            const request = store.get(id);
+            
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(new Error('Failed to get degustation'));
         });
     }
 
@@ -523,8 +551,11 @@ const CaveDB = (function() {
         getCurrentStatut,
         // Degustations
         createDegustation,
+        updateDegustation,
+        getDegustation,
         getDegustationsByCafe,
         getLatestDegustation,
+        deleteDegustation,
         // Utility
         getStats,
         clearAll,
