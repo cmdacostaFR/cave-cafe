@@ -153,6 +153,11 @@ const CaveCafeApp = (function() {
         document.getElementById('btn-delete-selected').addEventListener('click', deleteSelectedCafes);
         document.getElementById('btn-clear-all').addEventListener('click', clearAllData);
         document.getElementById('btn-scan-duplicates').addEventListener('click', scanDuplicates);
+        document.getElementById('btn-new-cafe').addEventListener('click', () => openCafeEditor());
+
+        // Cafe editor
+        document.getElementById('btn-cancel-edit-cafe').addEventListener('click', goBack);
+        document.getElementById('form-edit-cafe').addEventListener('submit', handleSaveCafe);
 
         // Confirm modal
         document.getElementById('btn-confirm-cancel').addEventListener('click', closeConfirmModal);
@@ -193,6 +198,9 @@ const CaveCafeApp = (function() {
                 case 'degustation':
                     title.textContent = 'Nouvelle dégustation';
                     break;
+                case 'edit-cafe':
+                    title.textContent = document.getElementById('edit-cafe-id').value ? 'Modifier le café' : 'Nouveau café';
+                    break;
                 case 'filters':
                     title.textContent = 'Filtres & Tri';
                     break;
@@ -209,6 +217,12 @@ const CaveCafeApp = (function() {
     function goBack() {
         if (currentView === 'degustation') {
             showCafeDetail(currentCafeId);
+        } else if (currentView === 'edit-cafe') {
+            if (currentCafeId) {
+                showCafeDetail(currentCafeId);
+            } else {
+                showView('settings');
+            }
         } else {
             showView('list');
             loadCoffeeList();
@@ -522,14 +536,26 @@ const CaveCafeApp = (function() {
                 ` : ''}
             </div>
             ${isAdminMode ? `
+                <button class="btn-primary btn-edit-cafe-info" id="btn-edit-current-cafe">
+                    Modifier cette fiche
+                </button>
+                <button class="btn-secondary btn-duplicate-cafe" id="btn-duplicate-current-cafe">
+                    Dupliquer cette fiche
+                </button>
                 <button class="btn-danger btn-delete-cafe" id="btn-delete-current-cafe">
                     Supprimer ce café
                 </button>
             ` : ''}
         `;
 
-        // Add delete handler if admin mode
+        // Add admin handlers
         if (isAdminMode) {
+            document.getElementById('btn-edit-current-cafe').addEventListener('click', () => {
+                openCafeEditor(cafe);
+            });
+            document.getElementById('btn-duplicate-current-cafe').addEventListener('click', () => {
+                duplicateCafe(cafe);
+            });
             document.getElementById('btn-delete-current-cafe').addEventListener('click', () => {
                 deleteSingleCafe(cafe.id, cafe.nom);
             });
@@ -1286,6 +1312,116 @@ const CaveCafeApp = (function() {
         });
 
         showToast(`${keys.length} groupe(s) de doublons trouvé(s)`, 'warning');
+    }
+
+    // ========================================
+    // CAFE EDITOR (Create / Edit / Duplicate)
+    // ========================================
+
+    function openCafeEditor(existingCafe = null, isDuplicate = false) {
+        // Reset form
+        document.getElementById('form-edit-cafe').reset();
+        
+        if (existingCafe && !isDuplicate) {
+            // Edit mode - keep the ID
+            document.getElementById('edit-cafe-id').value = existingCafe.id;
+            currentCafeId = existingCafe.id;
+            document.getElementById('btn-save-cafe').textContent = 'Mettre à jour';
+        } else if (existingCafe && isDuplicate) {
+            // Duplicate mode - no ID, it's a new cafe
+            document.getElementById('edit-cafe-id').value = '';
+            currentCafeId = null;
+            document.getElementById('btn-save-cafe').textContent = 'Créer le café';
+        } else {
+            // New cafe mode
+            document.getElementById('edit-cafe-id').value = '';
+            currentCafeId = null;
+            document.getElementById('btn-save-cafe').textContent = 'Créer le café';
+        }
+
+        // Fill form with existing data if available
+        if (existingCafe) {
+            document.getElementById('edit-cafe-nom').value = isDuplicate 
+                ? existingCafe.nom + ' (copie)' 
+                : existingCafe.nom || '';
+            document.getElementById('edit-cafe-origine').value = existingCafe.origine || '';
+            document.getElementById('edit-cafe-region').value = existingCafe.region || '';
+            document.getElementById('edit-cafe-terroir').value = existingCafe.terroir || '';
+            document.getElementById('edit-cafe-altitude').value = existingCafe.altitude || '';
+            document.getElementById('edit-cafe-process').value = existingCafe.process || '';
+            document.getElementById('edit-cafe-score').value = existingCafe.score || '';
+            document.getElementById('edit-cafe-espece').value = existingCafe.espece || '';
+            document.getElementById('edit-cafe-varietes').value = existingCafe.varietes || '';
+            document.getElementById('edit-cafe-fermente').checked = existingCafe.fermente || false;
+            document.getElementById('edit-cafe-saveurs').value = existingCafe.saveurs || '';
+            document.getElementById('edit-cafe-famille').value = existingCafe.familleAromatique || '';
+            document.getElementById('edit-cafe-intensite').value = existingCafe.intensite || '';
+            document.getElementById('edit-cafe-torrefaction').value = existingCafe.torrefaction || 'Moyenne';
+            document.getElementById('edit-cafe-prix').value = existingCafe.prixTTC || '';
+            document.getElementById('edit-cafe-label').value = existingCafe.label || '';
+            document.getElementById('edit-cafe-source').value = isDuplicate ? '' : (existingCafe.sourceURL || '');
+        }
+
+        showView('edit-cafe');
+    }
+
+    function duplicateCafe(cafe) {
+        openCafeEditor(cafe, true);
+    }
+
+    async function handleSaveCafe(e) {
+        e.preventDefault();
+
+        const cafeId = document.getElementById('edit-cafe-id').value;
+        const isEdit = !!cafeId;
+
+        // Collect form data
+        const cafeData = {
+            nom: document.getElementById('edit-cafe-nom').value.trim(),
+            origine: document.getElementById('edit-cafe-origine').value.trim(),
+            region: document.getElementById('edit-cafe-region').value.trim(),
+            terroir: document.getElementById('edit-cafe-terroir').value.trim(),
+            altitude: document.getElementById('edit-cafe-altitude').value.trim(),
+            process: document.getElementById('edit-cafe-process').value.trim(),
+            score: document.getElementById('edit-cafe-score').value ? parseFloat(document.getElementById('edit-cafe-score').value) : null,
+            espece: document.getElementById('edit-cafe-espece').value.trim(),
+            varietes: document.getElementById('edit-cafe-varietes').value.trim(),
+            fermente: document.getElementById('edit-cafe-fermente').checked,
+            saveurs: document.getElementById('edit-cafe-saveurs').value.trim(),
+            familleAromatique: document.getElementById('edit-cafe-famille').value.trim(),
+            intensite: document.getElementById('edit-cafe-intensite').value.trim(),
+            torrefaction: document.getElementById('edit-cafe-torrefaction').value,
+            prixTTC: document.getElementById('edit-cafe-prix').value ? parseFloat(document.getElementById('edit-cafe-prix').value) : null,
+            label: document.getElementById('edit-cafe-label').value.trim(),
+            sourceURL: document.getElementById('edit-cafe-source').value.trim()
+        };
+
+        // Validation
+        if (!cafeData.nom) {
+            showToast('Le nom du café est obligatoire', 'error');
+            return;
+        }
+
+        try {
+            if (isEdit) {
+                // Update existing cafe
+                const existingCafe = await CaveDB.getCafe(cafeId);
+                const updatedCafe = { ...existingCafe, ...cafeData };
+                await CaveDB.updateCafe(updatedCafe);
+                showToast('Café mis à jour', 'success');
+                showCafeDetail(cafeId);
+            } else {
+                // Create new cafe
+                const newCafe = await CaveDB.createCafe(cafeData);
+                showToast('Café créé', 'success');
+                await loadCoffeeList();
+                await updateStats();
+                showCafeDetail(newCafe.id);
+            }
+        } catch (error) {
+            console.error('Save cafe error:', error);
+            showToast('Erreur lors de l\'enregistrement', 'error');
+        }
     }
 
     // ========================================
