@@ -374,18 +374,25 @@
             <div class="settings-container">
                 <h2>Import / Export</h2>
                 
+                <div class="setting-card highlight-card">
+                    <h3>Restaurer une sauvegarde</h3>
+                    <p>Importez un fichier exporté par Cave à Café (cave-cafe-export-*.md)</p>
+                    <input type="file" id="input-import-backup" accept=".md" hidden>
+                    <button class="btn-primary" id="btn-import-backup">Restaurer une sauvegarde</button>
+                </div>
+
                 <div class="setting-card">
                     <h3>Importer des fiches café (.md)</h3>
                     <p>Importez vos fiches Plaine Café au format Markdown</p>
                     <input type="file" id="input-import-fiches" accept=".md" multiple hidden>
-                    <button class="btn-primary" id="btn-import-fiches">Sélectionner des fichiers</button>
+                    <button class="btn-secondary" id="btn-import-fiches">Sélectionner des fichiers</button>
                 </div>
 
                 <div class="setting-card">
                     <h3>Importer un tableau de suivi (.md)</h3>
                     <p>Importez un tableau Markdown existant (ex: Suivi dégustations)</p>
                     <input type="file" id="input-import-tableau" accept=".md" hidden>
-                    <button class="btn-primary" id="btn-import-tableau">Sélectionner un fichier</button>
+                    <button class="btn-secondary" id="btn-import-tableau">Sélectionner un fichier</button>
                 </div>
 
                 <div class="setting-card">
