@@ -175,7 +175,8 @@ const CafeExporter = (function() {
             fiche += `**Dégustations**\n\n`;
             for (const deg of cafe.degustations) {
                 const date = formatDateFull(new Date(deg.dateDegustation));
-                fiche += `#### Dégustation du ${date}\n\n`;
+                const infusion = deg.infusion ? ` (${deg.infusion})` : '';
+                fiche += `#### Dégustation du ${date}${infusion}\n\n`;
                 
                 if (deg.texteGenere) {
                     // Use generated text, properly formatted
