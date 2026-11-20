@@ -1,25 +1,30 @@
 /**
  * Cave à Café - Service Worker
  * Provides offline support and caching for PWA
+ * VERSION 2 - with auto-update support
  */
 
-const CACHE_NAME = 'cave-cafe-v1';
+// IMPORTANT: Change this version number to force update
+const CACHE_VERSION = 'v2.1';
+const CACHE_NAME = 'cave-cafe-' + CACHE_VERSION;
+
 const STATIC_ASSETS = [
-    '/',
-    '/index.html',
-    '/styles.css',
-    '/db.js',
-    '/parser.js',
-    '/exporter.js',
-    '/app.js',
-    '/manifest.json',
-    '/icons/icon-192.png',
-    '/icons/icon-512.png'
+    './',
+    './index.html',
+    './styles.css',
+    './db.js',
+    './parser.js',
+    './exporter.js',
+    './app.js',
+    './manifest.json'
 ];
 
-// Install event - precache static assets
+// Install event - precache static assets and skip waiting immediately
 self.addEventListener('install', (event) => {
-    console.log('[SW] Installing...');
+    console.log('[SW] Installing version ' + CACHE_VERSION);
+    
+    // Skip waiting to activate immediately
+    self.skipWaiting();
     
     event.waitUntil(
         caches.open(CACHE_NAME)
@@ -29,7 +34,6 @@ self.addEventListener('install', (event) => {
             })
             .then(() => {
                 console.log('[SW] Install complete');
-                return self.skipWaiting();
             })
             .catch((error) => {
                 console.error('[SW] Install failed:', error);
@@ -37,9 +41,9 @@ self.addEventListener('install', (event) => {
     );
 });
 
-// Activate event - clean up old caches
+// Activate event - clean up ALL old caches
 self.addEventListener('activate', (event) => {
-    console.log('[SW] Activating...');
+    console.log('[SW] Activating version ' + CACHE_VERSION);
     
     event.waitUntil(
         caches.keys()
@@ -54,13 +58,13 @@ self.addEventListener('activate', (event) => {
                 );
             })
             .then(() => {
-                console.log('[SW] Activation complete');
+                console.log('[SW] Activation complete, claiming clients');
                 return self.clients.claim();
             })
     );
 });
 
-// Fetch event - serve from cache, fallback to network
+// Fetch event - Network first, then cache (for better updates)
 self.addEventListener('fetch', (event) => {
     // Only handle GET requests
     if (event.request.method !== 'GET') {
@@ -73,36 +77,29 @@ self.addEventListener('fetch', (event) => {
     }
 
     event.respondWith(
-        caches.match(event.request)
-            .then((cachedResponse) => {
-                if (cachedResponse) {
-                    // Return cached response
-                    return cachedResponse;
+        // Try network first
+        fetch(event.request)
+            .then((networkResponse) => {
+                // If successful, cache the response
+                if (networkResponse && networkResponse.status === 200) {
+                    const responseToCache = networkResponse.clone();
+                    caches.open(CACHE_NAME)
+                        .then((cache) => {
+                            cache.put(event.request, responseToCache);
+                        });
                 }
-
-                // Fetch from network
-                return fetch(event.request)
-                    .then((networkResponse) => {
-                        // Don't cache non-successful responses
-                        if (!networkResponse || networkResponse.status !== 200) {
-                            return networkResponse;
+                return networkResponse;
+            })
+            .catch(() => {
+                // If network fails, try cache
+                return caches.match(event.request)
+                    .then((cachedResponse) => {
+                        if (cachedResponse) {
+                            return cachedResponse;
                         }
-
-                        // Clone the response (can only be consumed once)
-                        const responseToCache = networkResponse.clone();
-
-                        // Cache the fetched response
-                        caches.open(CACHE_NAME)
-                            .then((cache) => {
-                                cache.put(event.request, responseToCache);
-                            });
-
-                        return networkResponse;
-                    })
-                    .catch(() => {
-                        // If both cache and network fail, return offline page for navigation
+                        // If both fail and it's a navigation, return index.html
                         if (event.request.mode === 'navigate') {
-                            return caches.match('/index.html');
+                            return caches.match('./index.html');
                         }
                         return null;
                     });
@@ -117,8 +114,12 @@ self.addEventListener('message', (event) => {
     }
     
     if (event.data && event.data.type === 'CLEAR_CACHE') {
-        caches.delete(CACHE_NAME).then(() => {
-            console.log('[SW] Cache cleared');
+        caches.keys().then((names) => {
+            names.forEach((name) => {
+                caches.delete(name);
+            });
+        }).then(() => {
+            console.log('[SW] All caches cleared');
         });
     }
 });
