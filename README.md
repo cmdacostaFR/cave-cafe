@@ -10,7 +10,11 @@ et exportez vos données en Markdown.
 - **Optimisé pour iPhone Safari** : interface tactile, zones de sécurité, mode standalone
 - **Import de fiches café** : parseur intelligent pour fichiers Markdown Plaine Café
 - **Système de notation 1-5** : avec génération automatique de texte formaté
+- **Méthodes d'infusion** : Moka, Piston, V60 pour chaque dégustation
+- **Synthèse automatique** : moyennes et statistiques de vos dégustations
+- **Mode Admin** : gestion des doublons, suppression de cafés et dégustations
 - **Export Markdown** : tableau récapitulatif + fiches détaillées pour sauvegarde
+- **Restauration de sauvegarde** : réimportez vos exports pour récupérer toutes vos données
 
 ## Installation sur iPhone
 
@@ -22,6 +26,8 @@ et exportez vos données en Markdown.
 
 > **Important** : Safari peut purger les données d'un site inactif après plusieurs semaines. 
 > Pensez à exporter régulièrement vos données (voir section Export).
+
+> **Guide complet** : Voir `GUIDE_INSTALLATION_IPHONE.md` pour des instructions détaillées pas à pas.
 
 ## Installation locale (développement)
 
@@ -75,6 +81,7 @@ Pour changer le statut :
 1. Ouvrez le détail d'un café
 2. Onglet **"Dégustations"** → **"Nouvelle dégustation"**
 3. Remplissez :
+   - **Méthode d'infusion** : Moka (par défaut), Piston ou V60
    - **Au nez** : vos impressions olfactives
    - **Acidité** (1-5)
    - **Amertume** (1-5)
@@ -85,6 +92,28 @@ Pour changer le statut :
    - **Commentaire** (optionnel)
 4. Visualisez l'aperçu du texte généré
 5. Tapez **"Enregistrer"**
+
+### Synthèse des dégustations
+
+Dans l'onglet "Dégustations" de chaque café, vous verrez :
+- Un bloc de **synthèse** avec les moyennes de toutes vos dégustations
+- Des barres visuelles pour chaque critère (acidité, amertume, corps, longueur)
+- La note moyenne et le compteur "À racheter"
+- Les méthodes d'infusion testées
+
+Les dégustations sont listées de la plus récente à la plus ancienne.
+
+### Mode Admin
+
+Pour gérer les doublons et supprimer des données :
+
+1. Allez dans ⚙️ → **Administration**
+2. Activez le **Mode Admin** (interrupteur)
+3. Fonctionnalités disponibles :
+   - **Supprimer des cafés** : sélectionnez-les depuis la liste, puis "Supprimer la sélection"
+   - **Rechercher les doublons** : détecte les cafés avec des noms similaires
+   - **Modifier/Supprimer une dégustation** : boutons ✎ et × sur chaque dégustation
+   - **Réinitialiser la base** : supprime TOUTES les données (attention !)
 
 ### Filtrer et trier
 
@@ -103,7 +132,24 @@ Safari peut supprimer les données d'un site inactif. L'export .md est votre sau
 **Comment exporter ?**
 1. ⚙️ → Import/Export
 2. **"Exporter tout en .md"**
-3. Un fichier est téléchargé avec toutes vos données
+3. Un fichier `cave-cafe-export-YYYY-MM-DD.md` est téléchargé avec toutes vos données
+
+### Restaurer une sauvegarde
+
+**Quand utiliser ?**
+- Après une réinstallation de l'app
+- Si Safari a purgé vos données
+- Pour transférer vos données vers un autre appareil
+
+**Comment restaurer ?**
+1. ⚙️ → Import/Export
+2. Tapez sur **"Restaurer une sauvegarde"** (bouton en haut, mis en évidence)
+3. Sélectionnez votre fichier `cave-cafe-export-*.md`
+4. L'app restaure :
+   - Tous vos cafés avec leurs informations complètes
+   - L'historique des statuts
+   - Toutes vos dégustations
+5. Les données existantes sont fusionnées intelligemment (pas de doublons)
 
 ## Échelle de notation (1-5)
 
@@ -122,21 +168,28 @@ Safari peut supprimer les données d'un site inactif. L'export .md est votre sau
 ### Note globale
 1. **Médiocre** — 2. **Passable** — 3. **Bon** — 4. **Excellent** — 5. **Exceptionnel**
 
+## Méthodes d'infusion
+
+- **Moka** : cafetière italienne (choix par défaut)
+- **Piston** : French press / cafetière à piston
+- **V60** : méthode pour-over / filtre
+
 ## Structure du projet
 
 ```
 cave-cafe/
-├── index.html          # Point d'entrée HTML
-├── styles.css          # Styles CSS responsive
-├── db.js               # Module IndexedDB (CRUD)
-├── parser.js           # Parseur de fichiers .md
-├── exporter.js         # Générateur d'export .md
-├── app.js              # Application principale
-├── manifest.json       # Manifest PWA
-├── sw.js               # Service Worker
-├── icons/              # Icônes de l'application
+├── index.html                    # Point d'entrée HTML
+├── styles.css                    # Styles CSS responsive
+├── db.js                         # Module IndexedDB (CRUD)
+├── parser.js                     # Parseur de fichiers .md
+├── exporter.js                   # Générateur d'export .md
+├── app.js                        # Application principale
+├── manifest.json                 # Manifest PWA
+├── sw.js                         # Service Worker (v2)
+├── icons/                        # Icônes de l'application
 │   └── icon.svg
-└── README.md           # Cette documentation
+├── README.md                     # Cette documentation
+└── GUIDE_INSTALLATION_IPHONE.md  # Guide d'installation détaillé
 ```
 
 ## Technologies
@@ -144,13 +197,22 @@ cave-cafe/
 - **HTML5 / CSS3** : responsive mobile-first avec safe-area iOS
 - **JavaScript ES6+** : vanilla, sans framework
 - **IndexedDB** : stockage local structuré
-- **Service Worker** : mode offline et installation PWA
+- **Service Worker** : mode offline et installation PWA (stratégie Network-first)
 
 ## Données et confidentialité
 
 Toutes vos données restent 100% locales dans votre navigateur. Aucune information n'est 
 envoyée à un serveur. Vous êtes propriétaire de vos données et pouvez les exporter à 
 tout moment au format Markdown.
+
+## Mise à jour de l'application
+
+Voir `GUIDE_INSTALLATION_IPHONE.md` pour les instructions de mise à jour.
+
+En cas de problème de cache sur Safari :
+1. Réglages → Safari → Avancé → Données de sites
+2. Supprimer les données github.io
+3. Réinstaller l'application depuis Safari
 
 ## Génération des icônes
 
@@ -164,12 +226,33 @@ convert -background none icons/icon.svg -resize 512x512 icons/icon-512.png
 # Ou utilisez un outil en ligne comme realfavicongenerator.net
 ```
 
+## Historique des versions
+
+### Version 2.2 (Novembre 2026)
+- **Restauration de sauvegarde** : réimportez vos fichiers `cave-cafe-export-*.md`
+- Récupération complète : cafés, historique des statuts, dégustations
+- Fusion intelligente avec les données existantes
+
+### Version 2.0 (Novembre 2026)
+- Ajout des méthodes d'infusion (Moka, Piston, V60)
+- Synthèse automatique des dégustations avec moyennes
+- Mode Admin avec gestion des doublons
+- Modification et suppression des dégustations
+- Amélioration du Service Worker (mise à jour automatique)
+
+### Version 1.0 (Novembre 2026)
+- Version initiale
+- Import de fiches Plaine Café
+- Gestion du stock (En stock / Entamé / Fini)
+- Système de notation 1-5
+- Export Markdown
+
 ## Licence
 
 MIT License - Libre d'utilisation et de modification.
 
 ---
 
-**Version** : 1.0  
+**Version** : 2.2  
 **Auteur** : Cave à Café  
 **Date** : Novembre 2026
