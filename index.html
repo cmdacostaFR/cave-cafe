@@ -73,6 +73,17 @@
         <!-- Vue Nouvelle Dégustation -->
         <section id="view-degustation" class="view hidden">
             <form id="form-degustation" class="degustation-form">
+                <input type="hidden" id="input-degustation-id" value="">
+                
+                <div class="form-group">
+                    <label>Méthode d'infusion</label>
+                    <div class="infusion-buttons" data-field="infusion">
+                        <button type="button" data-value="Moka" class="active">Moka</button>
+                        <button type="button" data-value="Piston">Piston</button>
+                        <button type="button" data-value="V60">V60</button>
+                    </div>
+                </div>
+
                 <div class="form-group">
                     <label for="input-nez">Au nez</label>
                     <input type="text" id="input-nez" placeholder="Ex: Fruits rouges et cacao">
@@ -159,7 +170,7 @@
 
                 <div class="form-actions">
                     <button type="button" class="btn-secondary" id="btn-cancel-degustation">Annuler</button>
-                    <button type="submit" class="btn-primary">Enregistrer</button>
+                    <button type="submit" class="btn-primary" id="btn-save-degustation">Enregistrer</button>
                 </div>
             </form>
         </section>
@@ -279,6 +290,42 @@
                     </div>
                 </div>
 
+                <h2>Administration</h2>
+                <div class="setting-card admin-card">
+                    <h3>Mode Admin</h3>
+                    <p>Activez pour gérer les doublons et supprimer des cafés</p>
+                    <div class="admin-toggle">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="toggle-admin">
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span id="admin-status">Désactivé</span>
+                    </div>
+                </div>
+
+                <div id="admin-section" class="admin-section hidden">
+                    <div class="setting-card danger-card">
+                        <h3>Supprimer des cafés en masse</h3>
+                        <p>Sélectionnez les cafés à supprimer depuis la liste</p>
+                        <button class="btn-danger" id="btn-delete-selected">Supprimer la sélection (0)</button>
+                    </div>
+                    
+                    <div class="setting-card danger-card">
+                        <h3>Réinitialiser la base</h3>
+                        <p>Supprimer TOUS les cafés et dégustations</p>
+                        <button class="btn-danger" id="btn-clear-all">Tout supprimer</button>
+                    </div>
+
+                    <div class="setting-card">
+                        <h3>Doublons détectés</h3>
+                        <p>Cafés avec des noms similaires</p>
+                        <div id="duplicates-list" class="duplicates-list">
+                            <p class="text-muted">Aucun doublon détecté</p>
+                        </div>
+                        <button class="btn-secondary" id="btn-scan-duplicates">Rechercher les doublons</button>
+                    </div>
+                </div>
+
                 <h2>À propos</h2>
                 <p class="about-text">Cave à Café v1.0 — Application PWA pour gérer votre collection de cafés de spécialité. Toutes vos données restent 100% locales.</p>
             </div>
@@ -302,6 +349,18 @@
             <h3 id="result-title">Import terminé</h3>
             <div id="result-content"></div>
             <button class="btn-primary" id="btn-close-result">Fermer</button>
+        </div>
+    </div>
+
+    <!-- Modal Confirm Delete -->
+    <div id="modal-confirm" class="modal hidden">
+        <div class="modal-content">
+            <h3 id="confirm-title">Confirmer la suppression</h3>
+            <p id="confirm-message">Êtes-vous sûr ?</p>
+            <div class="modal-actions">
+                <button class="btn-secondary" id="btn-confirm-cancel">Annuler</button>
+                <button class="btn-danger" id="btn-confirm-ok">Supprimer</button>
+            </div>
         </div>
     </div>
 
