@@ -72,6 +72,11 @@ const CaveCafeApp = (function() {
         });
         document.getElementById('input-import-tableau').addEventListener('change', handleImportTableau);
 
+        document.getElementById('btn-import-backup').addEventListener('click', () => {
+            document.getElementById('input-import-backup').click();
+        });
+        document.getElementById('input-import-backup').addEventListener('change', handleImportBackup);
+
         document.getElementById('btn-export').addEventListener('click', handleExport);
         document.getElementById('btn-import-empty').addEventListener('click', () => showView('settings'));
 
@@ -1009,6 +1014,45 @@ const CaveCafeApp = (function() {
             hideProgressModal();
             showToast('Erreur d\'import', 'error');
             console.error('Import error:', error);
+        }
+
+        // Reset input
+        e.target.value = '';
+    }
+
+    async function handleImportBackup(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        showProgressModal('Restauration en cours...');
+
+        try {
+            const result = await CafeParser.importBackup(file, (current, total) => {
+                updateProgressModal(`${current}/${total} cafés`, (current / total) * 100);
+            });
+
+            hideProgressModal();
+
+            if (result.errors.length > 0 && result.imported === 0 && result.merged === 0) {
+                showResultModal('Erreur de restauration', `
+                    <p class="error">${result.errors[0]}</p>
+                `);
+            } else {
+                showResultModal('Restauration terminée', `
+                    <p class="success">${result.imported} café(s) restauré(s)</p>
+                    <p class="warning">${result.merged} café(s) fusionné(s)</p>
+                    <p class="info">${result.degustationsImported} dégustation(s) restaurée(s)</p>
+                    ${result.errors.length > 0 ? `<p class="error">${result.errors.length} erreur(s)</p>` : ''}
+                `);
+            }
+
+            await loadCoffeeList();
+            await updateStats();
+            await updateOrigineOptions();
+        } catch (error) {
+            hideProgressModal();
+            showToast('Erreur de restauration', 'error');
+            console.error('Import backup error:', error);
         }
 
         // Reset input
