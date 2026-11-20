@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Cave Café">
+    <meta name="theme-color" content="#6f4e37">
+    <meta name="description" content="Gérez votre collection de cafés de spécialité">
+    
+    <title>Cave à Café</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="app-header">
+        <div class="header-left">
+            <button id="btn-back" class="btn-icon hidden" aria-label="Retour">
+                <svg viewBox="0 0 24 24" width="24" height="24">
+                    <path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                </svg>
+            </button>
+            <h1 id="header-title">Cave à Café</h1>
+        </div>
+        <div class="header-right">
+            <button id="btn-filter" class="btn-icon" aria-label="Filtres">
+                <svg viewBox="0 0 24 24" width="24" height="24">
+                    <path fill="currentColor" d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/>
+                </svg>
+            </button>
+            <button id="btn-settings" class="btn-icon" aria-label="Paramètres">
+                <svg viewBox="0 0 24 24" width="24" height="24">
+                    <path fill="currentColor" d="M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="app-main">
+        <!-- Vue Liste (par défaut) -->
+        <section id="view-list" class="view active">
+            <div class="filter-chips" id="active-filters"></div>
+            <div class="results-count" id="results-count"></div>
+            <div class="coffee-grid" id="coffee-grid"></div>
+            <div class="empty-state hidden" id="empty-state">
+                <div class="empty-icon">☕</div>
+                <h2>Votre cave est vide</h2>
+                <p>Importez vos fiches café pour commencer</p>
+                <button class="btn-primary" id="btn-import-empty">Importer des cafés</button>
+            </div>
+        </section>
+
+        <!-- Vue Détail Café -->
+        <section id="view-detail" class="view hidden">
+            <div class="detail-header" id="detail-header"></div>
+            <div class="detail-tabs">
+                <button class="tab-btn active" data-tab="info">Info</button>
+                <button class="tab-btn" data-tab="statut">Statut</button>
+                <button class="tab-btn" data-tab="degustations">Dégustations</button>
+            </div>
+            <div class="tab-content">
+                <div id="tab-info" class="tab-panel active"></div>
+                <div id="tab-statut" class="tab-panel hidden"></div>
+                <div id="tab-degustations" class="tab-panel hidden"></div>
+            </div>
+        </section>
+
+        <!-- Vue Nouvelle Dégustation -->
+        <section id="view-degustation" class="view hidden">
+            <form id="form-degustation" class="degustation-form">
+                <div class="form-group">
+                    <label for="input-nez">Au nez</label>
+                    <input type="text" id="input-nez" placeholder="Ex: Fruits rouges et cacao">
+                </div>
+                
+                <div class="form-group">
+                    <label>Acidité</label>
+                    <div class="rating-buttons" data-field="acidite">
+                        <button type="button" data-value="1" title="Très faible">1</button>
+                        <button type="button" data-value="2" title="Faible">2</button>
+                        <button type="button" data-value="3" title="Modérée">3</button>
+                        <button type="button" data-value="4" title="Élevée">4</button>
+                        <button type="button" data-value="5" title="Très élevée">5</button>
+                    </div>
+                    <span class="rating-label" id="label-acidite"></span>
+                </div>
+
+                <div class="form-group">
+                    <label>Amertume</label>
+                    <div class="rating-buttons" data-field="amertume">
+                        <button type="button" data-value="1" title="Très faible">1</button>
+                        <button type="button" data-value="2" title="Faible">2</button>
+                        <button type="button" data-value="3" title="Modérée">3</button>
+                        <button type="button" data-value="4" title="Élevée">4</button>
+                        <button type="button" data-value="5" title="Très élevée">5</button>
+                    </div>
+                    <span class="rating-label" id="label-amertume"></span>
+                </div>
+
+                <div class="form-group">
+                    <label>Corps</label>
+                    <div class="rating-buttons" data-field="corps">
+                        <button type="button" data-value="1" title="Très léger">1</button>
+                        <button type="button" data-value="2" title="Léger">2</button>
+                        <button type="button" data-value="3" title="Moyen">3</button>
+                        <button type="button" data-value="4" title="Corsé">4</button>
+                        <button type="button" data-value="5" title="Très corsé">5</button>
+                    </div>
+                    <span class="rating-label" id="label-corps"></span>
+                </div>
+
+                <div class="form-group">
+                    <label>Longueur en bouche</label>
+                    <div class="rating-buttons" data-field="longueurBouche">
+                        <button type="button" data-value="1" title="Très courte">1</button>
+                        <button type="button" data-value="2" title="Courte">2</button>
+                        <button type="button" data-value="3" title="Moyenne">3</button>
+                        <button type="button" data-value="4" title="Longue">4</button>
+                        <button type="button" data-value="5" title="Très longue">5</button>
+                    </div>
+                    <span class="rating-label" id="label-longueurBouche"></span>
+                </div>
+
+                <div class="form-group">
+                    <label>Note globale</label>
+                    <div class="rating-buttons" data-field="noteGlobale">
+                        <button type="button" data-value="1" title="Médiocre">1</button>
+                        <button type="button" data-value="2" title="Passable">2</button>
+                        <button type="button" data-value="3" title="Bon">3</button>
+                        <button type="button" data-value="4" title="Excellent">4</button>
+                        <button type="button" data-value="5" title="Exceptionnel">5</button>
+                    </div>
+                    <span class="rating-label" id="label-noteGlobale"></span>
+                </div>
+
+                <div class="form-group">
+                    <label>À racheter</label>
+                    <div class="choice-buttons" data-field="aRacheter">
+                        <button type="button" data-value="Oui" class="choice-oui">Oui</button>
+                        <button type="button" data-value="Peut-être" class="choice-peut-etre">Peut-être</button>
+                        <button type="button" data-value="Non" class="choice-non">Non</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="input-commentaire">Commentaire (optionnel)</label>
+                    <textarea id="input-commentaire" rows="3" placeholder="Remarques libres..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Aperçu du texte généré</label>
+                    <div class="preview-box" id="preview-degustation"></div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" id="btn-cancel-degustation">Annuler</button>
+                    <button type="submit" class="btn-primary">Enregistrer</button>
+                </div>
+            </form>
+        </section>
+
+        <!-- Vue Filtres -->
+        <section id="view-filters" class="view hidden">
+            <div class="filters-container">
+                <h2>Filtres</h2>
+                
+                <div class="filter-group">
+                    <label>Statut</label>
+                    <div class="filter-chips-select" id="filter-statut">
+                        <button class="chip active" data-value="all">Tous</button>
+                        <button class="chip" data-value="En stock">En stock</button>
+                        <button class="chip" data-value="Entamé">Entamé</button>
+                        <button class="chip" data-value="Fini">Fini</button>
+                    </div>
+                </div>
+
+                <div class="filter-group">
+                    <label>Fermenté</label>
+                    <div class="filter-chips-select" id="filter-fermente">
+                        <button class="chip active" data-value="all">Tous</button>
+                        <button class="chip" data-value="true">Oui</button>
+                        <button class="chip" data-value="false">Non</button>
+                    </div>
+                </div>
+
+                <div class="filter-group">
+                    <label for="filter-origine">Origine</label>
+                    <select id="filter-origine">
+                        <option value="all">Toutes</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label>Score minimum</label>
+                    <div class="range-container">
+                        <input type="range" id="filter-score" min="0" max="100" value="0">
+                        <span id="filter-score-value">0</span>
+                    </div>
+                </div>
+
+                <div class="filter-group">
+                    <label>À racheter</label>
+                    <div class="filter-chips-select" id="filter-racheter">
+                        <button class="chip active" data-value="all">Tous</button>
+                        <button class="chip" data-value="Oui">Oui seulement</button>
+                    </div>
+                </div>
+
+                <h2>Tri</h2>
+                <div class="filter-group">
+                    <select id="sort-by">
+                        <option value="nom-asc">Nom (A-Z)</option>
+                        <option value="nom-desc">Nom (Z-A)</option>
+                        <option value="score-desc">Score (décroissant)</option>
+                        <option value="date-desc">Date ajout (récent)</option>
+                        <option value="degustation-desc">Dernière dégustation</option>
+                    </select>
+                </div>
+
+                <div class="filter-actions">
+                    <button class="btn-secondary" id="btn-reset-filters">Réinitialiser</button>
+                    <button class="btn-primary" id="btn-apply-filters">Appliquer</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Vue Import/Export -->
+        <section id="view-settings" class="view hidden">
+            <div class="settings-container">
+                <h2>Import / Export</h2>
+                
+                <div class="setting-card">
+                    <h3>Importer des fiches café (.md)</h3>
+                    <p>Importez vos fiches Plaine Café au format Markdown</p>
+                    <input type="file" id="input-import-fiches" accept=".md" multiple hidden>
+                    <button class="btn-primary" id="btn-import-fiches">Sélectionner des fichiers</button>
+                </div>
+
+                <div class="setting-card">
+                    <h3>Importer un tableau de suivi (.md)</h3>
+                    <p>Importez un tableau Markdown existant (ex: Suivi dégustations)</p>
+                    <input type="file" id="input-import-tableau" accept=".md" hidden>
+                    <button class="btn-primary" id="btn-import-tableau">Sélectionner un fichier</button>
+                </div>
+
+                <div class="setting-card">
+                    <h3>Exporter tout en .md</h3>
+                    <p>Téléchargez toute votre collection (tableau + fiches détaillées)</p>
+                    <button class="btn-primary" id="btn-export">Exporter</button>
+                </div>
+
+                <div class="warning-box">
+                    <strong>Rappel iOS</strong>
+                    <p>Safari peut purger les données d'un site inactif. Pensez à exporter régulièrement vos données.</p>
+                </div>
+
+                <h2>Statistiques</h2>
+                <div class="stats-grid" id="stats-grid">
+                    <div class="stat-card">
+                        <span class="stat-value" id="stat-total">0</span>
+                        <span class="stat-label">Cafés</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-value" id="stat-stock">0</span>
+                        <span class="stat-label">En stock</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-value" id="stat-entame">0</span>
+                        <span class="stat-label">Entamés</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-value" id="stat-fini">0</span>
+                        <span class="stat-label">Finis</span>
+                    </div>
+                </div>
+
+                <h2>À propos</h2>
+                <p class="about-text">Cave à Café v1.0 — Application PWA pour gérer votre collection de cafés de spécialité. Toutes vos données restent 100% locales.</p>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal Import Progress -->
+    <div id="modal-progress" class="modal hidden">
+        <div class="modal-content">
+            <h3>Import en cours...</h3>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+            <p id="progress-text">Préparation...</p>
+        </div>
+    </div>
+
+    <!-- Modal Import Result -->
+    <div id="modal-result" class="modal hidden">
+        <div class="modal-content">
+            <h3 id="result-title">Import terminé</h3>
+            <div id="result-content"></div>
+            <button class="btn-primary" id="btn-close-result">Fermer</button>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="db.js"></script>
+    <script src="parser.js"></script>
+    <script src="exporter.js"></script>
+    <script src="app.js"></script>
+
+    <!-- Register Service Worker -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => console.log('Service Worker registered'))
+                    .catch(err => console.log('Service Worker registration failed:', err));
+            });
+        }
+    </script>
+</body>
+</html>
