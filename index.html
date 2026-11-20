@@ -175,6 +175,135 @@
             </form>
         </section>
 
+        <!-- Vue Édition Café (Admin) -->
+        <section id="view-edit-cafe" class="view hidden">
+            <form id="form-edit-cafe" class="edit-cafe-form">
+                <input type="hidden" id="edit-cafe-id" value="">
+                
+                <div class="form-section">
+                    <h3>Informations principales</h3>
+                    
+                    <div class="form-group">
+                        <label for="edit-cafe-nom">Nom du café *</label>
+                        <input type="text" id="edit-cafe-nom" placeholder="Ex: Café Colombie JAGUARUNDI" required>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit-cafe-origine">Origine</label>
+                            <input type="text" id="edit-cafe-origine" placeholder="Ex: Colombie">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-cafe-region">Région</label>
+                            <input type="text" id="edit-cafe-region" placeholder="Ex: Huila">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit-cafe-terroir">Terroir</label>
+                            <input type="text" id="edit-cafe-terroir" placeholder="Ex: Aipe">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-cafe-altitude">Altitude</label>
+                            <input type="text" id="edit-cafe-altitude" placeholder="Ex: 1700-1900">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>Caractéristiques</h3>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit-cafe-process">Process</label>
+                            <input type="text" id="edit-cafe-process" placeholder="Ex: Nature, Lavé">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-cafe-score">Score</label>
+                            <input type="number" id="edit-cafe-score" placeholder="Ex: 86" min="0" max="100" step="0.5">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit-cafe-espece">Espèce</label>
+                            <input type="text" id="edit-cafe-espece" placeholder="Ex: Arabica">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-cafe-varietes">Variétés</label>
+                            <input type="text" id="edit-cafe-varietes" placeholder="Ex: Typica, Bourbon">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Fermenté</label>
+                        <div class="toggle-inline">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="edit-cafe-fermente">
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <span>Oui</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>Arômes & Saveurs</h3>
+                    
+                    <div class="form-group">
+                        <label for="edit-cafe-saveurs">Saveurs / Notes</label>
+                        <input type="text" id="edit-cafe-saveurs" placeholder="Ex: Fruits rouges, cacao, chocolat">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit-cafe-famille">Famille aromatique</label>
+                            <input type="text" id="edit-cafe-famille" placeholder="Ex: Fruité">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-cafe-intensite">Intensité</label>
+                            <input type="text" id="edit-cafe-intensite" placeholder="Ex: Équilibré">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit-cafe-torrefaction">Torréfaction</label>
+                        <select id="edit-cafe-torrefaction">
+                            <option value="Faible">Faible (blonde)</option>
+                            <option value="Moyenne" selected>Moyenne (médium)</option>
+                            <option value="Forte">Forte (foncée)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>Informations complémentaires</h3>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit-cafe-prix">Prix (€)</label>
+                            <input type="number" id="edit-cafe-prix" placeholder="Ex: 14.00" min="0" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-cafe-label">Label</label>
+                            <input type="text" id="edit-cafe-label" placeholder="Ex: Bio, Équitable">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit-cafe-source">URL source (optionnel)</label>
+                        <input type="url" id="edit-cafe-source" placeholder="https://...">
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" id="btn-cancel-edit-cafe">Annuler</button>
+                    <button type="submit" class="btn-primary" id="btn-save-cafe">Enregistrer</button>
+                </div>
+            </form>
+        </section>
+
         <!-- Vue Filtres -->
         <section id="view-filters" class="view hidden">
             <div class="filters-container">
@@ -304,6 +433,12 @@
                 </div>
 
                 <div id="admin-section" class="admin-section hidden">
+                    <div class="setting-card">
+                        <h3>Ajouter un café manuellement</h3>
+                        <p>Créer une nouvelle fiche café sans importer de fichier</p>
+                        <button class="btn-primary" id="btn-new-cafe">Nouveau café</button>
+                    </div>
+
                     <div class="setting-card danger-card">
                         <h3>Supprimer des cafés en masse</h3>
                         <p>Sélectionnez les cafés à supprimer depuis la liste</p>
@@ -327,7 +462,7 @@
                 </div>
 
                 <h2>À propos</h2>
-                <p class="about-text">Cave à Café v1.0 — Application PWA pour gérer votre collection de cafés de spécialité. Toutes vos données restent 100% locales.</p>
+                <p class="about-text">Cave à Café v2.0 — Application PWA pour gérer votre collection de cafés de spécialité. Toutes vos données restent 100% locales.</p>
             </div>
         </section>
     </main>
