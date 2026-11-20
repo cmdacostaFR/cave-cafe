@@ -16,6 +16,11 @@ const CaveCafeApp = (function() {
     };
     let currentSort = 'nom-asc';
     let degustationFormData = {};
+    
+    // Admin mode state
+    let isAdminMode = false;
+    let selectedCafes = new Set();
+    let confirmCallback = null;
 
     // Rating labels
     const RATING_LABELS = {
@@ -115,6 +120,18 @@ const CaveCafeApp = (function() {
             });
         });
 
+        // Infusion buttons
+        document.querySelectorAll('.infusion-buttons').forEach(container => {
+            container.querySelectorAll('button').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    container.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    degustationFormData.infusion = btn.dataset.value;
+                    updateDegustationPreview();
+                });
+            });
+        });
+
         document.getElementById('input-nez').addEventListener('input', (e) => {
             degustationFormData.auNez = e.target.value;
             updateDegustationPreview();
@@ -130,6 +147,16 @@ const CaveCafeApp = (function() {
 
         // Modal
         document.getElementById('btn-close-result').addEventListener('click', closeResultModal);
+
+        // Admin mode
+        document.getElementById('toggle-admin').addEventListener('change', toggleAdminMode);
+        document.getElementById('btn-delete-selected').addEventListener('click', deleteSelectedCafes);
+        document.getElementById('btn-clear-all').addEventListener('click', clearAllData);
+        document.getElementById('btn-scan-duplicates').addEventListener('click', scanDuplicates);
+
+        // Confirm modal
+        document.getElementById('btn-confirm-cancel').addEventListener('click', closeConfirmModal);
+        document.getElementById('btn-confirm-ok').addEventListener('click', executeConfirmAction);
     }
 
     // ========================================
@@ -283,7 +310,7 @@ const CaveCafeApp = (function() {
         emptyState.classList.add('hidden');
 
         grid.innerHTML = cafes.map(cafe => `
-            <div class="coffee-card" data-id="${cafe.id}">
+            <div class="coffee-card ${isAdminMode ? 'admin-mode' : ''} ${selectedCafes.has(cafe.id) ? 'selected' : ''}" data-id="${cafe.id}">
                 <div class="coffee-card-name">${escapeHtml(cafe.nom)}</div>
                 <div class="coffee-card-origin">${escapeHtml(cafe.origine || 'Origine inconnue')}</div>
                 <div class="coffee-card-badges">
@@ -297,7 +324,11 @@ const CaveCafeApp = (function() {
         // Add click handlers
         grid.querySelectorAll('.coffee-card').forEach(card => {
             card.addEventListener('click', () => {
-                showCafeDetail(card.dataset.id);
+                if (isAdminMode) {
+                    toggleCafeSelection(card.dataset.id);
+                } else {
+                    showCafeDetail(card.dataset.id);
+                }
             });
         });
     }
@@ -490,7 +521,19 @@ const CaveCafeApp = (function() {
                     </div>
                 ` : ''}
             </div>
+            ${isAdminMode ? `
+                <button class="btn-danger btn-delete-cafe" id="btn-delete-current-cafe">
+                    Supprimer ce café
+                </button>
+            ` : ''}
         `;
+
+        // Add delete handler if admin mode
+        if (isAdminMode) {
+            document.getElementById('btn-delete-current-cafe').addEventListener('click', () => {
+                deleteSingleCafe(cafe.id, cafe.nom);
+            });
+        }
     }
 
     function renderTabStatut(cafe) {
@@ -540,23 +583,142 @@ const CaveCafeApp = (function() {
                 <button class="btn-primary btn-new-degustation">Nouvelle dégustation</button>
             `;
         } else {
+            // Generate summary
+            const summary = generateDegustationSummary(cafe.degustations);
+            
             container.innerHTML = `
+                ${summary}
                 <div class="degustations-list">
                     ${cafe.degustations.map(deg => `
-                        <div class="degustation-item">
-                            <div class="degustation-date">${formatDateFull(new Date(deg.dateDegustation))}</div>
+                        <div class="degustation-item" data-id="${deg.id}">
+                            <div class="degustation-header">
+                                <div class="degustation-meta">
+                                    ${deg.infusion ? `<span class="degustation-infusion">${deg.infusion}</span>` : ''}
+                                    <span class="degustation-date">${formatDateFull(new Date(deg.dateDegustation))}</span>
+                                </div>
+                                ${isAdminMode ? `
+                                    <div class="degustation-actions">
+                                        <button class="btn-edit-degustation" data-id="${deg.id}" title="Modifier">✎</button>
+                                        <button class="btn-delete-degustation" data-id="${deg.id}" title="Supprimer">×</button>
+                                    </div>
+                                ` : ''}
+                            </div>
                             <pre class="degustation-preview">${escapeHtml(deg.texteGenere || 'Pas de détails')}</pre>
                         </div>
                     `).join('')}
                 </div>
                 <button class="btn-primary btn-new-degustation">Nouvelle dégustation</button>
             `;
+
+            // Add admin action handlers
+            if (isAdminMode) {
+                container.querySelectorAll('.btn-edit-degustation').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        editDegustation(btn.dataset.id);
+                    });
+                });
+                container.querySelectorAll('.btn-delete-degustation').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        deleteDegustationConfirm(btn.dataset.id, cafe.id);
+                    });
+                });
+            }
         }
 
         // Add click handler for new degustation button
         container.querySelector('.btn-new-degustation').addEventListener('click', () => {
             openDegustationForm(cafe.id);
         });
+    }
+
+    function generateDegustationSummary(degustations) {
+        if (degustations.length === 0) return '';
+
+        // Calculate averages
+        let aciditeSum = 0, aciditeCount = 0;
+        let amertumeSum = 0, amertumeCount = 0;
+        let corpsSum = 0, corpsCount = 0;
+        let longueurSum = 0, longueurCount = 0;
+        let noteSum = 0, noteCount = 0;
+        let aRacheterOui = 0;
+        const infusions = {};
+
+        degustations.forEach(deg => {
+            if (deg.acidite) { aciditeSum += deg.acidite; aciditeCount++; }
+            if (deg.amertume) { amertumeSum += deg.amertume; amertumeCount++; }
+            if (deg.corps) { corpsSum += deg.corps; corpsCount++; }
+            if (deg.longueurBouche) { longueurSum += deg.longueurBouche; longueurCount++; }
+            if (deg.noteGlobale) { noteSum += deg.noteGlobale; noteCount++; }
+            if (deg.aRacheter === 'Oui') aRacheterOui++;
+            if (deg.infusion) {
+                infusions[deg.infusion] = (infusions[deg.infusion] || 0) + 1;
+            }
+        });
+
+        const avgAcidite = aciditeCount > 0 ? (aciditeSum / aciditeCount).toFixed(1) : '-';
+        const avgAmertume = amertumeCount > 0 ? (amertumeSum / amertumeCount).toFixed(1) : '-';
+        const avgCorps = corpsCount > 0 ? (corpsSum / corpsCount).toFixed(1) : '-';
+        const avgLongueur = longueurCount > 0 ? (longueurSum / longueurCount).toFixed(1) : '-';
+        const avgNote = noteCount > 0 ? (noteSum / noteCount).toFixed(1) : '-';
+
+        const infusionsList = Object.entries(infusions)
+            .sort((a, b) => b[1] - a[1])
+            .map(([name, count]) => `${name} (${count})`)
+            .join(', ');
+
+        return `
+            <div class="degustations-summary">
+                <div class="summary-title">Synthèse (${degustations.length} dégustation${degustations.length > 1 ? 's' : ''})</div>
+                <div class="summary-grid">
+                    <div class="summary-item">
+                        <span class="summary-item-label">Acidité</span>
+                        <div class="summary-bar">
+                            <div class="summary-bar-fill"><div class="summary-bar-fill-inner" style="width: ${avgAcidite !== '-' ? (parseFloat(avgAcidite) / 5 * 100) : 0}%"></div></div>
+                            <span class="summary-bar-value">${avgAcidite}/5</span>
+                        </div>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-item-label">Amertume</span>
+                        <div class="summary-bar">
+                            <div class="summary-bar-fill"><div class="summary-bar-fill-inner" style="width: ${avgAmertume !== '-' ? (parseFloat(avgAmertume) / 5 * 100) : 0}%"></div></div>
+                            <span class="summary-bar-value">${avgAmertume}/5</span>
+                        </div>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-item-label">Corps</span>
+                        <div class="summary-bar">
+                            <div class="summary-bar-fill"><div class="summary-bar-fill-inner" style="width: ${avgCorps !== '-' ? (parseFloat(avgCorps) / 5 * 100) : 0}%"></div></div>
+                            <span class="summary-bar-value">${avgCorps}/5</span>
+                        </div>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-item-label">Longueur</span>
+                        <div class="summary-bar">
+                            <div class="summary-bar-fill"><div class="summary-bar-fill-inner" style="width: ${avgLongueur !== '-' ? (parseFloat(avgLongueur) / 5 * 100) : 0}%"></div></div>
+                            <span class="summary-bar-value">${avgLongueur}/5</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="summary-grid" style="margin-top: var(--spacing-sm);">
+                    <div class="summary-item">
+                        <span class="summary-item-label">Note moyenne</span>
+                        <span class="summary-item-value">${avgNote}/5</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-item-label">À racheter</span>
+                        <span class="summary-item-value">${aRacheterOui}/${degustations.length}</span>
+                    </div>
+                </div>
+                ${infusionsList ? `
+                    <div class="summary-item" style="margin-top: var(--spacing-sm);">
+                        <span class="summary-item-label">Infusions testées</span>
+                        <span class="summary-item-value">${infusionsList}</span>
+                    </div>
+                ` : ''}
+            </div>
+        `;
     }
 
     function switchTab(tabName) {
@@ -576,14 +738,20 @@ const CaveCafeApp = (function() {
     // DEGUSTATION FORM
     // ========================================
 
-    function openDegustationForm(cafeId) {
+    let editingDegustationId = null;
+
+    function openDegustationForm(cafeId, existingDegustation = null) {
         currentCafeId = cafeId;
+        editingDegustationId = existingDegustation ? existingDegustation.id : null;
         degustationFormData = {};
 
         // Reset form
+        document.getElementById('input-degustation-id').value = editingDegustationId || '';
         document.getElementById('input-nez').value = '';
         document.getElementById('input-commentaire').value = '';
-        document.querySelectorAll('.rating-buttons button, .choice-buttons button').forEach(btn => {
+        
+        // Reset all buttons
+        document.querySelectorAll('.rating-buttons button, .choice-buttons button, .infusion-buttons button').forEach(btn => {
             btn.classList.remove('active');
         });
         document.querySelectorAll('.rating-label').forEach(label => {
@@ -591,7 +759,86 @@ const CaveCafeApp = (function() {
         });
         document.getElementById('preview-degustation').textContent = '';
 
+        // Set default infusion to Moka
+        const mokaBtn = document.querySelector('.infusion-buttons button[data-value="Moka"]');
+        if (mokaBtn) {
+            mokaBtn.classList.add('active');
+            degustationFormData.infusion = 'Moka';
+        }
+
+        // If editing, populate form with existing data
+        if (existingDegustation) {
+            degustationFormData = { ...existingDegustation };
+            
+            document.getElementById('input-nez').value = existingDegustation.auNez || '';
+            document.getElementById('input-commentaire').value = existingDegustation.commentaire || '';
+            
+            // Set infusion
+            if (existingDegustation.infusion) {
+                document.querySelectorAll('.infusion-buttons button').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.value === existingDegustation.infusion);
+                });
+            }
+
+            // Set ratings
+            ['acidite', 'amertume', 'corps', 'longueurBouche', 'noteGlobale'].forEach(field => {
+                if (existingDegustation[field]) {
+                    const container = document.querySelector(`.rating-buttons[data-field="${field}"]`);
+                    if (container) {
+                        const btn = container.querySelector(`button[data-value="${existingDegustation[field]}"]`);
+                        if (btn) btn.classList.add('active');
+                        updateRatingLabel(field, existingDegustation[field]);
+                    }
+                }
+            });
+
+            // Set aRacheter
+            if (existingDegustation.aRacheter) {
+                const container = document.querySelector('.choice-buttons[data-field="aRacheter"]');
+                if (container) {
+                    const btn = container.querySelector(`button[data-value="${existingDegustation.aRacheter}"]`);
+                    if (btn) btn.classList.add('active');
+                }
+            }
+
+            updateDegustationPreview();
+            
+            // Update button text
+            document.getElementById('btn-save-degustation').textContent = 'Mettre à jour';
+        } else {
+            document.getElementById('btn-save-degustation').textContent = 'Enregistrer';
+        }
+
         showView('degustation');
+    }
+
+    async function editDegustation(degustationId) {
+        try {
+            const degustation = await CaveDB.getDegustation(degustationId);
+            if (degustation) {
+                openDegustationForm(degustation.cafeId, degustation);
+            }
+        } catch (error) {
+            console.error('Error loading degustation:', error);
+            showToast('Erreur de chargement', 'error');
+        }
+    }
+
+    function deleteDegustationConfirm(degustationId, cafeId) {
+        showConfirmModal(
+            'Supprimer cette dégustation',
+            'Êtes-vous sûr de vouloir supprimer cette dégustation ? Cette action est irréversible.',
+            async () => {
+                try {
+                    await CaveDB.deleteDegustation(degustationId);
+                    showToast('Dégustation supprimée', 'success');
+                    showCafeDetail(cafeId);
+                } catch (error) {
+                    console.error('Error deleting degustation:', error);
+                    showToast('Erreur de suppression', 'error');
+                }
+            }
+        );
     }
 
     function updateRatingLabel(field, value) {
@@ -603,6 +850,10 @@ const CaveCafeApp = (function() {
 
     function updateDegustationPreview() {
         let preview = '';
+
+        if (degustationFormData.infusion) {
+            preview += `Infusion : ${degustationFormData.infusion}\n`;
+        }
 
         if (degustationFormData.auNez) {
             preview += `Au nez : ${degustationFormData.auNez}\n`;
@@ -645,12 +896,26 @@ const CaveCafeApp = (function() {
         const texteGenere = updateDegustationPreview();
 
         try {
-            await CaveDB.createDegustation(currentCafeId, {
-                ...degustationFormData,
-                texteGenere: texteGenere
-            });
-
-            showToast('Dégustation enregistrée');
+            if (editingDegustationId) {
+                // Update existing degustation
+                const existing = await CaveDB.getDegustation(editingDegustationId);
+                const updated = {
+                    ...existing,
+                    ...degustationFormData,
+                    texteGenere: texteGenere
+                };
+                await CaveDB.updateDegustation(updated);
+                showToast('Dégustation mise à jour');
+            } else {
+                // Create new degustation
+                await CaveDB.createDegustation(currentCafeId, {
+                    ...degustationFormData,
+                    texteGenere: texteGenere
+                });
+                showToast('Dégustation enregistrée');
+            }
+            
+            editingDegustationId = null;
             showCafeDetail(currentCafeId);
         } catch (error) {
             console.error('Error saving degustation:', error);
@@ -831,6 +1096,221 @@ const CaveCafeApp = (function() {
         });
     }
 
+    // ========================================
+    // ADMIN MODE
+    // ========================================
+
+    function toggleAdminMode() {
+        isAdminMode = document.getElementById('toggle-admin').checked;
+        const adminSection = document.getElementById('admin-section');
+        const adminStatus = document.getElementById('admin-status');
+
+        if (isAdminMode) {
+            adminSection.classList.remove('hidden');
+            adminStatus.textContent = 'Activé';
+            adminStatus.style.color = 'var(--color-error)';
+            selectedCafes.clear();
+            showToast('Mode admin activé', 'warning');
+        } else {
+            adminSection.classList.add('hidden');
+            adminStatus.textContent = 'Désactivé';
+            adminStatus.style.color = '';
+            selectedCafes.clear();
+        }
+
+        // Refresh the list to show/hide checkboxes
+        loadCoffeeList();
+        updateDeleteButtonCount();
+    }
+
+    function toggleCafeSelection(cafeId) {
+        if (selectedCafes.has(cafeId)) {
+            selectedCafes.delete(cafeId);
+        } else {
+            selectedCafes.add(cafeId);
+        }
+
+        // Update card visual
+        const card = document.querySelector(`.coffee-card[data-id="${cafeId}"]`);
+        if (card) {
+            card.classList.toggle('selected', selectedCafes.has(cafeId));
+        }
+
+        updateDeleteButtonCount();
+    }
+
+    function updateDeleteButtonCount() {
+        const btn = document.getElementById('btn-delete-selected');
+        const count = selectedCafes.size;
+        btn.textContent = `Supprimer la sélection (${count})`;
+        btn.disabled = count === 0;
+    }
+
+    function deleteSelectedCafes() {
+        if (selectedCafes.size === 0) return;
+
+        const count = selectedCafes.size;
+        showConfirmModal(
+            'Supprimer les cafés sélectionnés',
+            `Êtes-vous sûr de vouloir supprimer ${count} café(s) ? Cette action est irréversible.`,
+            async () => {
+                try {
+                    for (const cafeId of selectedCafes) {
+                        await CaveDB.deleteCafe(cafeId);
+                    }
+                    selectedCafes.clear();
+                    updateDeleteButtonCount();
+                    await loadCoffeeList();
+                    await updateStats();
+                    showToast(`${count} café(s) supprimé(s)`, 'success');
+                } catch (error) {
+                    console.error('Delete error:', error);
+                    showToast('Erreur lors de la suppression', 'error');
+                }
+            }
+        );
+    }
+
+    function deleteSingleCafe(cafeId, cafeName) {
+        showConfirmModal(
+            'Supprimer ce café',
+            `Êtes-vous sûr de vouloir supprimer "${cafeName}" ? Cette action supprimera également l'historique des statuts et les dégustations associées.`,
+            async () => {
+                try {
+                    await CaveDB.deleteCafe(cafeId);
+                    showToast('Café supprimé', 'success');
+                    showView('list');
+                    await loadCoffeeList();
+                    await updateStats();
+                } catch (error) {
+                    console.error('Delete error:', error);
+                    showToast('Erreur lors de la suppression', 'error');
+                }
+            }
+        );
+    }
+
+    function clearAllData() {
+        showConfirmModal(
+            'Supprimer TOUTES les données',
+            'Êtes-vous ABSOLUMENT sûr ? Cette action supprimera TOUS vos cafés, dégustations et historiques. Cette action est IRRÉVERSIBLE.',
+            async () => {
+                try {
+                    await CaveDB.clearAll();
+                    selectedCafes.clear();
+                    updateDeleteButtonCount();
+                    await loadCoffeeList();
+                    await updateStats();
+                    showToast('Base de données réinitialisée', 'success');
+                } catch (error) {
+                    console.error('Clear error:', error);
+                    showToast('Erreur lors de la réinitialisation', 'error');
+                }
+            }
+        );
+    }
+
+    async function scanDuplicates() {
+        try {
+            const cafes = await CaveDB.getAllCafes();
+            const duplicates = findDuplicates(cafes);
+            renderDuplicatesList(duplicates);
+        } catch (error) {
+            console.error('Scan error:', error);
+            showToast('Erreur lors de la recherche', 'error');
+        }
+    }
+
+    function findDuplicates(cafes) {
+        const groups = {};
+
+        // Normalize names for comparison
+        cafes.forEach(cafe => {
+            const normalized = normalizeName(cafe.nom);
+            if (!groups[normalized]) {
+                groups[normalized] = [];
+            }
+            groups[normalized].push(cafe);
+        });
+
+        // Filter to only groups with 2+ cafes
+        const duplicates = {};
+        for (const key in groups) {
+            if (groups[key].length > 1) {
+                duplicates[key] = groups[key];
+            }
+        }
+
+        return duplicates;
+    }
+
+    function normalizeName(name) {
+        if (!name) return '';
+        return name
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '') // Remove accents
+            .replace(/[^a-z0-9]/g, '') // Remove non-alphanumeric
+            .trim();
+    }
+
+    function renderDuplicatesList(duplicates) {
+        const container = document.getElementById('duplicates-list');
+        const keys = Object.keys(duplicates);
+
+        if (keys.length === 0) {
+            container.innerHTML = '<p class="text-muted">Aucun doublon détecté</p>';
+            return;
+        }
+
+        container.innerHTML = keys.map(key => {
+            const cafes = duplicates[key];
+            return `
+                <div class="duplicate-group">
+                    <div class="duplicate-group-title">${cafes.length} entrées similaires :</div>
+                    ${cafes.map(cafe => `
+                        <div class="duplicate-item">
+                            <span class="duplicate-item-name">${escapeHtml(cafe.nom)}</span>
+                            <button class="duplicate-item-delete" data-id="${cafe.id}" data-name="${escapeHtml(cafe.nom)}">×</button>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }).join('');
+
+        // Add delete handlers
+        container.querySelectorAll('.duplicate-item-delete').forEach(btn => {
+            btn.addEventListener('click', () => {
+                deleteSingleCafe(btn.dataset.id, btn.dataset.name);
+            });
+        });
+
+        showToast(`${keys.length} groupe(s) de doublons trouvé(s)`, 'warning');
+    }
+
+    // ========================================
+    // CONFIRM MODAL
+    // ========================================
+
+    function showConfirmModal(title, message, callback) {
+        document.getElementById('confirm-title').textContent = title;
+        document.getElementById('confirm-message').textContent = message;
+        confirmCallback = callback;
+        document.getElementById('modal-confirm').classList.remove('hidden');
+    }
+
+    function closeConfirmModal() {
+        document.getElementById('modal-confirm').classList.add('hidden');
+        confirmCallback = null;
+    }
+
+    async function executeConfirmAction() {
+        if (confirmCallback) {
+            await confirmCallback();
+        }
+        closeConfirmModal();
+    }
+
     // Initialize when DOM is ready
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
@@ -842,6 +1322,7 @@ const CaveCafeApp = (function() {
     return {
         init,
         showView,
-        loadCoffeeList
+        loadCoffeeList,
+        toggleAdminMode
     };
 })();
