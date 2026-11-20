@@ -1042,6 +1042,21 @@ h3 { font-size: 1.1rem; }
     margin-bottom: var(--spacing-md);
 }
 
+.setting-card.highlight-card {
+    border: 2px solid var(--color-primary);
+    background: linear-gradient(135deg, var(--color-surface) 0%, rgba(111, 78, 55, 0.05) 100%);
+}
+
+@media (prefers-color-scheme: dark) {
+    .setting-card.highlight-card {
+        background: linear-gradient(135deg, var(--color-surface) 0%, rgba(201, 166, 107, 0.1) 100%);
+    }
+}
+
+.setting-card.highlight-card h3 {
+    color: var(--color-primary);
+}
+
 .warning-box {
     background-color: #fff3e0;
     border-radius: var(--radius-md);
