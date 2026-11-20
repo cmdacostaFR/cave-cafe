@@ -613,12 +613,271 @@ const CafeParser = (function() {
         return result;
     }
 
+    /**
+     * Parse a Cave à Café backup export file (cave-cafe-export-*.md)
+     * @param {string} content - The markdown content
+     * @returns {Object} Parsed data { cafes: [], degustations: [] }
+     */
+    function parseBackupExport(content) {
+        const result = {
+            cafes: [],
+            degustations: []
+        };
+
+        try {
+            // Split by fiche sections (### Nom du café)
+            const ficheSections = content.split(/\n### /).slice(1); // Skip header before first ###
+
+            for (const section of ficheSections) {
+                const lines = section.split('\n');
+                const nom = lines[0].trim();
+                
+                if (!nom || nom.startsWith('Échelle') || nom.startsWith('Statuts')) {
+                    continue; // Skip legend sections
+                }
+
+                const cafe = {
+                    nom: nom,
+                    origine: '',
+                    region: '',
+                    terroir: '',
+                    process: '',
+                    altitude: '',
+                    espece: '',
+                    varietes: '',
+                    score: null,
+                    fermente: false,
+                    familleAromatique: '',
+                    intensite: '',
+                    saveurs: '',
+                    prixTTC: null,
+                    sourceURL: '',
+                    label: '',
+                    torrefaction: 'Moyenne',
+                    status: 'En stock',
+                    statusHistory: []
+                };
+
+                const sectionContent = section;
+
+                // Parse informations générales
+                const infoMatch = sectionContent.match(/\*\*Origine\*\*\s*:\s*([^\n]+)/);
+                if (infoMatch) cafe.origine = infoMatch[1].trim();
+
+                const regionMatch = sectionContent.match(/\*\*Région\*\*\s*:\s*([^\n]+)/);
+                if (regionMatch) cafe.region = regionMatch[1].trim();
+
+                const terroirMatch = sectionContent.match(/\*\*Terroir\*\*\s*:\s*([^\n]+)/);
+                if (terroirMatch) cafe.terroir = terroirMatch[1].trim();
+
+                const processMatch = sectionContent.match(/\*\*Process\*\*\s*:\s*([^\n]+)/);
+                if (processMatch) cafe.process = processMatch[1].trim();
+
+                const altitudeMatch = sectionContent.match(/\*\*Altitude\*\*\s*:\s*([^\n]+)/);
+                if (altitudeMatch) cafe.altitude = altitudeMatch[1].trim();
+
+                const especeMatch = sectionContent.match(/\*\*Espèce\*\*\s*:\s*([^\n]+)/);
+                if (especeMatch) cafe.espece = especeMatch[1].trim();
+
+                const varietesMatch = sectionContent.match(/\*\*Variétés\*\*\s*:\s*([^\n]+)/);
+                if (varietesMatch) cafe.varietes = varietesMatch[1].trim();
+
+                const scoreMatch = sectionContent.match(/\*\*Score\*\*\s*:\s*([0-9.,]+)/);
+                if (scoreMatch) cafe.score = parseFloat(scoreMatch[1].replace(',', '.'));
+
+                const fermenteMatch = sectionContent.match(/\*\*Fermenté\*\*\s*:\s*(Oui|Non)/i);
+                if (fermenteMatch) cafe.fermente = fermenteMatch[1].toLowerCase() === 'oui';
+
+                const familleMatch = sectionContent.match(/\*\*Famille aromatique\*\*\s*:\s*([^\n]+)/);
+                if (familleMatch) cafe.familleAromatique = familleMatch[1].trim();
+
+                const intensiteMatch = sectionContent.match(/\*\*Intensité\*\*\s*:\s*([^\n]+)/);
+                if (intensiteMatch) cafe.intensite = intensiteMatch[1].trim();
+
+                const saveursMatch = sectionContent.match(/\*\*Saveurs\*\*\s*:\s*([^\n]+)/);
+                if (saveursMatch) cafe.saveurs = saveursMatch[1].trim();
+
+                const torrefMatch = sectionContent.match(/\*\*Torréfaction\*\*\s*:\s*([^\n]+)/);
+                if (torrefMatch) cafe.torrefaction = torrefMatch[1].trim();
+
+                const labelMatch = sectionContent.match(/\*\*Label\*\*\s*:\s*([^\n]+)/);
+                if (labelMatch) cafe.label = labelMatch[1].trim();
+
+                const prixMatch = sectionContent.match(/\*\*Prix\*\*\s*:\s*([0-9.,]+)\s*€/);
+                if (prixMatch) cafe.prixTTC = parseFloat(prixMatch[1].replace(',', '.'));
+
+                const sourceMatch = sectionContent.match(/\*\*Source\*\*\s*:\s*\[Lien\]\(([^)]+)\)/);
+                if (sourceMatch) cafe.sourceURL = sourceMatch[1].trim();
+
+                // Parse status history
+                const historySection = sectionContent.match(/\*\*Historique des statuts\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/);
+                if (historySection) {
+                    const historyLines = historySection[1].match(/-\s*(\d+\/\d+\/\d+)\s+(\d+:\d+)\s*:\s*([^\n]+)/g);
+                    if (historyLines) {
+                        for (const line of historyLines) {
+                            const match = line.match(/-\s*(\d+)\/(\d+)\/(\d+)\s+(\d+):(\d+)\s*:\s*(.+)/);
+                            if (match) {
+                                const [, day, month, year, hour, minute, status] = match;
+                                const date = new Date(year, month - 1, day, hour, minute);
+                                cafe.statusHistory.push({
+                                    date: date.toISOString(),
+                                    status: status.trim()
+                                });
+                                // Keep the last status as current
+                                cafe.status = status.trim();
+                            }
+                        }
+                    }
+                }
+
+                // Parse degustations
+                const degustationMatches = sectionContent.matchAll(/####\s*Dégustation du (\d+)\s+(\w+)\s+(\d+)\s*\(([^)]+)\)\s*\n\s*```\s*\n([\s\S]*?)```/g);
+                for (const degMatch of degustationMatches) {
+                    const [, day, monthName, year, infusion, commentaire] = degMatch;
+                    
+                    const monthMap = {
+                        'janvier': 0, 'février': 1, 'mars': 2, 'avril': 3, 'mai': 4, 'juin': 5,
+                        'juillet': 6, 'août': 7, 'septembre': 8, 'octobre': 9, 'novembre': 10, 'décembre': 11
+                    };
+                    const month = monthMap[monthName.toLowerCase()] || 0;
+                    const date = new Date(parseInt(year), month, parseInt(day));
+
+                    result.degustations.push({
+                        cafeNom: nom,
+                        date: date.toISOString(),
+                        infusion: infusion.trim(),
+                        texteGenere: commentaire.trim()
+                    });
+                }
+
+                result.cafes.push(cafe);
+            }
+        } catch (error) {
+            console.error('Error parsing backup export:', error);
+        }
+
+        return result;
+    }
+
+    /**
+     * Import a Cave à Café backup export file
+     * @param {File} file - The file
+     * @param {Function} progressCallback - Progress callback
+     * @returns {Promise<Object>} Import result
+     */
+    async function importBackup(file, progressCallback) {
+        const result = {
+            imported: 0,
+            merged: 0,
+            degustationsImported: 0,
+            errors: [],
+            cafes: []
+        };
+
+        try {
+            const content = await readFileAsText(file);
+            
+            // Check if this is a Cave à Café export
+            if (!content.includes('# Cave à Café — Export')) {
+                result.errors.push('Ce fichier ne semble pas être un export Cave à Café valide');
+                return result;
+            }
+
+            const parsed = parseBackupExport(content);
+            const total = parsed.cafes.length;
+            let current = 0;
+
+            for (const cafeData of parsed.cafes) {
+                current++;
+                if (progressCallback) progressCallback(current, total);
+
+                try {
+                    // Check if cafe already exists
+                    const existing = await CaveDB.findCafeByName(cafeData.nom);
+
+                    if (existing) {
+                        // Merge data - update existing with backup data
+                        const merged = { ...existing };
+                        
+                        // Update all fields from backup
+                        if (cafeData.origine) merged.origine = cafeData.origine;
+                        if (cafeData.region) merged.region = cafeData.region;
+                        if (cafeData.terroir) merged.terroir = cafeData.terroir;
+                        if (cafeData.process) merged.process = cafeData.process;
+                        if (cafeData.altitude) merged.altitude = cafeData.altitude;
+                        if (cafeData.espece) merged.espece = cafeData.espece;
+                        if (cafeData.varietes) merged.varietes = cafeData.varietes;
+                        if (cafeData.score) merged.score = cafeData.score;
+                        if (cafeData.fermente) merged.fermente = cafeData.fermente;
+                        if (cafeData.familleAromatique) merged.familleAromatique = cafeData.familleAromatique;
+                        if (cafeData.intensite) merged.intensite = cafeData.intensite;
+                        if (cafeData.saveurs) merged.saveurs = cafeData.saveurs;
+                        if (cafeData.torrefaction) merged.torrefaction = cafeData.torrefaction;
+                        if (cafeData.label) merged.label = cafeData.label;
+                        if (cafeData.prixTTC) merged.prixTTC = cafeData.prixTTC;
+                        if (cafeData.sourceURL) merged.sourceURL = cafeData.sourceURL;
+                        if (cafeData.status) merged.status = cafeData.status;
+                        if (cafeData.statusHistory && cafeData.statusHistory.length > 0) {
+                            merged.statusHistory = cafeData.statusHistory;
+                        }
+
+                        await CaveDB.updateCafe(merged);
+                        result.merged++;
+                        result.cafes.push(merged);
+                    } else {
+                        // Create new cafe
+                        const newCafe = await CaveDB.createCafe(cafeData);
+                        result.imported++;
+                        result.cafes.push(newCafe);
+                    }
+                } catch (error) {
+                    result.errors.push(`${cafeData.nom}: ${error.message}`);
+                }
+            }
+
+            // Import degustations
+            for (const degData of parsed.degustations) {
+                try {
+                    // Find the cafe
+                    const cafe = await CaveDB.findCafeByName(degData.cafeNom);
+                    if (cafe) {
+                        // Check if this degustation already exists (by date and cafe)
+                        const existingDegs = await CaveDB.getDegustations(cafe.id);
+                        const degDate = new Date(degData.date).toDateString();
+                        const exists = existingDegs.some(d => 
+                            new Date(d.date).toDateString() === degDate && 
+                            d.infusion === degData.infusion
+                        );
+
+                        if (!exists) {
+                            await CaveDB.createDegustation(cafe.id, {
+                                date: degData.date,
+                                infusion: degData.infusion,
+                                texteGenere: degData.texteGenere
+                            });
+                            result.degustationsImported++;
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error importing degustation:', error);
+                }
+            }
+
+        } catch (error) {
+            result.errors.push(`Erreur fichier: ${error.message}`);
+        }
+
+        return result;
+    }
+
     // Public API
     return {
         parseFicheCafe,
         parseTableauSuivi,
+        parseBackupExport,
         importFiches,
         importTableau,
+        importBackup,
         readFileAsText
     };
 })();
