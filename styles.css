@@ -746,6 +746,93 @@ h3 { font-size: 1.1rem; }
     color: var(--color-primary-dark);
 }
 
+/* ========================================
+   Edit Cafe Form
+   ======================================== */
+.edit-cafe-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+}
+
+.form-section {
+    background-color: var(--color-surface);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-lg);
+    box-shadow: var(--shadow-sm);
+}
+
+.form-section h3 {
+    font-size: 1rem;
+    color: var(--color-primary);
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 1px solid var(--color-divider);
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-md);
+}
+
+@media (max-width: 400px) {
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+.edit-cafe-form .form-group {
+    margin-bottom: var(--spacing-md);
+}
+
+.edit-cafe-form .form-group:last-child {
+    margin-bottom: 0;
+}
+
+.edit-cafe-form input[type="text"],
+.edit-cafe-form input[type="number"],
+.edit-cafe-form input[type="url"],
+.edit-cafe-form select {
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    font-size: 16px;
+    background-color: var(--color-surface);
+    color: var(--color-text);
+}
+
+.edit-cafe-form input:focus,
+.edit-cafe-form select:focus {
+    outline: none;
+    border-color: var(--color-primary);
+}
+
+.toggle-inline {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.toggle-inline span {
+    font-size: 0.95rem;
+    color: var(--color-text-secondary);
+}
+
+/* Duplicate/Edit button in detail view */
+.btn-duplicate-cafe {
+    width: 100%;
+    margin-top: var(--spacing-sm);
+    background-color: var(--color-secondary);
+    color: var(--color-primary-dark);
+}
+
+.btn-edit-cafe-info {
+    width: 100%;
+    margin-top: var(--spacing-sm);
+}
+
 /* Rating buttons */
 .rating-buttons {
     display: flex;
