@@ -647,6 +647,7 @@ const CafeParser = (function() {
                     varietes: '',
                     score: null,
                     fermente: false,
+                    decafeine: false,
                     familleAromatique: '',
                     intensite: '',
                     saveurs: '',
@@ -687,6 +688,9 @@ const CafeParser = (function() {
 
                 const fermenteMatch = sectionContent.match(/\*\*Fermenté\*\*\s*:\s*(Oui|Non)/i);
                 if (fermenteMatch) cafe.fermente = fermenteMatch[1].toLowerCase() === 'oui';
+
+                const decafeineMatch = sectionContent.match(/\*\*Décaféiné\*\*\s*:\s*(Oui|Non)/i);
+                if (decafeineMatch) cafe.decafeine = decafeineMatch[1].toLowerCase() === 'oui';
 
                 const familleMatch = sectionContent.match(/\*\*Famille aromatique\*\*\s*:\s*([^\n]+)/);
                 if (familleMatch) cafe.familleAromatique = familleMatch[1].trim();
