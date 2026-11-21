@@ -330,16 +330,23 @@ const CaveCafeApp = (function() {
 
         grid.innerHTML = cafes.map(cafe => `
             <div class="coffee-card ${isAdminMode ? 'admin-mode' : ''} ${selectedCafes.has(cafe.id) ? 'selected' : ''}" data-id="${cafe.id}">
-                <div class="coffee-card-header">
-                    <div class="coffee-card-name">${escapeHtml(cafe.nom)}</div>
-                    <div class="coffee-card-pills">
-                        ${getTorrefactionPill(cafe.torrefaction)}
-                        ${cafe.label && cafe.label.toLowerCase().includes('bio') ? '<span class="pill pill-bio">Bio</span>' : ''}
-                        ${cafe.decafeine || (cafe.process && cafe.process.toLowerCase().includes('décaféiné')) ? '<span class="pill pill-deca">Déca</span>' : ''}
-                        ${cafe.fermente ? '<span class="pill pill-fermente">Fermenté</span>' : ''}
+                ${isAdminMode ? `
+                    <div class="coffee-card-admin-bar">
+                        <label class="admin-checkbox" onclick="event.stopPropagation()">
+                            <input type="checkbox" class="admin-select-cb" data-id="${cafe.id}" ${selectedCafes.has(cafe.id) ? 'checked' : ''}>
+                            <span>Sélectionner</span>
+                        </label>
+                        <button class="btn-admin-open" data-id="${cafe.id}" onclick="event.stopPropagation()">Ouvrir</button>
                     </div>
-                </div>
+                ` : ''}
+                <div class="coffee-card-name">${escapeHtml(cafe.nom)}</div>
                 <div class="coffee-card-origin">${escapeHtml(cafe.origine || 'Origine inconnue')}</div>
+                <div class="coffee-card-pills">
+                    ${getTorrefactionPill(cafe.torrefaction)}
+                    ${cafe.label && cafe.label.toLowerCase().includes('bio') ? '<span class="pill pill-bio">Bio</span>' : ''}
+                    ${cafe.decafeine || (cafe.process && cafe.process.toLowerCase().includes('décaféiné')) ? '<span class="pill pill-deca">Déca</span>' : ''}
+                    ${cafe.fermente ? '<span class="pill pill-fermente">Fermenté</span>' : ''}
+                </div>
                 <div class="coffee-card-badges">
                     <span class="badge badge-statut ${getStatutClass(cafe.currentStatut)}">${cafe.currentStatut}</span>
                     ${cafe.score ? `<span class="badge badge-score">${cafe.score}</span>` : ''}
@@ -350,13 +357,27 @@ const CaveCafeApp = (function() {
         // Add click handlers
         grid.querySelectorAll('.coffee-card').forEach(card => {
             card.addEventListener('click', () => {
-                if (isAdminMode) {
-                    toggleCafeSelection(card.dataset.id);
-                } else {
+                if (!isAdminMode) {
                     showCafeDetail(card.dataset.id);
                 }
+                // En mode admin, le clic sur la carte ouvre aussi le détail
+                // La sélection se fait via la checkbox
             });
         });
+
+        // Admin mode: checkbox handlers
+        if (isAdminMode) {
+            grid.querySelectorAll('.admin-select-cb').forEach(cb => {
+                cb.addEventListener('change', (e) => {
+                    toggleCafeSelection(e.target.dataset.id);
+                });
+            });
+            grid.querySelectorAll('.btn-admin-open').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    showCafeDetail(btn.dataset.id);
+                });
+            });
+        }
     }
 
     function getStatutClass(statut) {
