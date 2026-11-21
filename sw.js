@@ -5,7 +5,7 @@
  */
 
 // IMPORTANT: Change this version number to force update
-const CACHE_VERSION = 'v2.2';
+const CACHE_VERSION = 'v2.3';
 const CACHE_NAME = 'cave-cafe-' + CACHE_VERSION;
 
 const STATIC_ASSETS = [
