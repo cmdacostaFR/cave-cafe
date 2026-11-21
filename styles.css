@@ -311,6 +311,84 @@ h3 { font-size: 1.1rem; }
     color: var(--color-primary-dark);
 }
 
+/* Coffee card header with pills */
+.coffee-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+}
+
+.coffee-card-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+    flex-shrink: 0;
+}
+
+/* Pills (small indicators) */
+.pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px 5px;
+    border-radius: var(--radius-sm);
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Torréfaction pills */
+.pill-torref {
+    color: white;
+}
+
+.pill-tl {
+    background-color: #c9a66b; /* Light roast - amber/gold */
+}
+
+.pill-tm {
+    background-color: #8b6b4a; /* Medium roast - brown */
+}
+
+.pill-tf {
+    background-color: #4a3728; /* Dark roast - dark brown */
+}
+
+/* Bio pill */
+.pill-bio {
+    background-color: #4caf50;
+    color: white;
+}
+
+/* Déca pill */
+.pill-deca {
+    background-color: #2196f3;
+    color: white;
+}
+
+/* Fermenté pill */
+.pill-fermente {
+    background-color: #9c27b0;
+    color: white;
+}
+
+@media (prefers-color-scheme: dark) {
+    .pill-tl {
+        background-color: #d4b87a;
+        color: #2c2824;
+    }
+    
+    .pill-tm {
+        background-color: #a08060;
+    }
+    
+    .pill-tf {
+        background-color: #5a4738;
+    }
+}
+
 /* Results count */
 .results-count {
     font-size: 0.9rem;
