@@ -277,6 +277,53 @@ h3 { font-size: 1.1rem; }
     color: var(--color-text-secondary);
 }
 
+/* Admin bar on cards */
+.coffee-card-admin-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: var(--spacing-sm);
+    margin-bottom: var(--spacing-xs);
+    border-bottom: 1px solid var(--color-divider);
+}
+
+.admin-checkbox {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+}
+
+.admin-checkbox input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--color-primary);
+}
+
+.btn-admin-open {
+    background-color: var(--color-primary);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 4px 10px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.btn-admin-open:active {
+    background-color: var(--color-primary-dark);
+}
+
+/* Pills row under origin */
+.coffee-card-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
 .coffee-card-badges {
     display: flex;
     flex-wrap: wrap;
@@ -309,21 +356,6 @@ h3 { font-size: 1.1rem; }
 .badge-score {
     background-color: var(--color-secondary);
     color: var(--color-primary-dark);
-}
-
-/* Coffee card header with pills */
-.coffee-card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: var(--spacing-sm);
-}
-
-.coffee-card-pills {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 3px;
-    flex-shrink: 0;
 }
 
 /* Pills (small indicators) */
