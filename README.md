@@ -13,6 +13,7 @@ et exportez vos données en Markdown.
 - **Méthodes d'infusion** : Moka, Piston, V60 pour chaque dégustation
 - **Synthèse automatique** : moyennes et statistiques de vos dégustations
 - **Mode Admin** : gestion des doublons, suppression de cafés et dégustations
+- **Pastilles visuelles** : indicateurs rapides (torréfaction, bio, déca, fermenté) sur chaque carte
 - **Export Markdown** : tableau récapitulatif + fiches détaillées pour sauvegarde
 - **Restauration de sauvegarde** : réimportez vos exports pour récupérer toutes vos données
 
@@ -110,9 +111,12 @@ Pour gérer les doublons et supprimer des données :
 1. Allez dans ⚙️ → **Administration**
 2. Activez le **Mode Admin** (interrupteur)
 3. Fonctionnalités disponibles :
+   - **Modifier une fiche café** : bouton "Modifier cette fiche" dans le détail
+   - **Dupliquer une fiche café** : créer une copie d'un café existant
    - **Supprimer des cafés** : sélectionnez-les depuis la liste, puis "Supprimer la sélection"
    - **Rechercher les doublons** : détecte les cafés avec des noms similaires
    - **Modifier/Supprimer une dégustation** : boutons ✎ et × sur chaque dégustation
+   - **Créer un nouveau café** : bouton "Nouveau café" dans les paramètres
    - **Réinitialiser la base** : supprime TOUTES les données (attention !)
 
 ### Filtrer et trier
@@ -174,6 +178,21 @@ Safari peut supprimer les données d'un site inactif. L'export .md est votre sau
 - **Piston** : French press / cafetière à piston
 - **V60** : méthode pour-over / filtre
 
+## Pastilles visuelles
+
+Chaque carte café affiche des pastilles colorées pour identifier rapidement ses caractéristiques :
+
+| Pastille | Couleur | Signification |
+|----------|---------|---------------|
+| **TL** | Ambre/Or | Torréfaction Légère (blonde) |
+| **TM** | Marron | Torréfaction Moyenne (médium) |
+| **TF** | Marron foncé | Torréfaction Forte (foncée) |
+| **Bio** | Vert | Label biologique |
+| **Déca** | Bleu | Décaféiné |
+| **Fermenté** | Violet | Café fermenté |
+
+Ces pastilles sont modifiables via le formulaire d'édition en mode Admin.
+
 ## Structure du projet
 
 ```
@@ -228,6 +247,11 @@ convert -background none icons/icon.svg -resize 512x512 icons/icon-512.png
 
 ## Historique des versions
 
+### Version 2.3 (Novembre 2026)
+- **Pastilles visuelles** sur les cartes : TL/TM/TF (torréfaction), Bio, Déca, Fermenté
+- Ajout du champ "Décaféiné" dans le formulaire d'édition
+- Affichage optimisé des caractéristiques sur chaque carte
+
 ### Version 2.2 (Novembre 2026)
 - **Restauration de sauvegarde** : réimportez vos fichiers `cave-cafe-export-*.md`
 - Récupération complète : cafés, historique des statuts, dégustations
@@ -253,6 +277,6 @@ MIT License - Libre d'utilisation et de modification.
 
 ---
 
-**Version** : 2.2  
+**Version** : 2.3  
 **Auteur** : Cave à Café  
 **Date** : Novembre 2026
