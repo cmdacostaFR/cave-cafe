@@ -136,6 +136,7 @@ const CafeExporter = (function() {
             ['Variétés', cafe.varietes],
             ['Score', cafe.score],
             ['Fermenté', cafe.fermente ? 'Oui' : 'Non'],
+            ['Décaféiné', cafe.decafeine ? 'Oui' : 'Non'],
             ['Famille aromatique', cafe.familleAromatique],
             ['Intensité', cafe.intensite],
             ['Saveurs', cafe.saveurs],
