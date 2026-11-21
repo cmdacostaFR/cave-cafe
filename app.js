@@ -330,11 +330,18 @@ const CaveCafeApp = (function() {
 
         grid.innerHTML = cafes.map(cafe => `
             <div class="coffee-card ${isAdminMode ? 'admin-mode' : ''} ${selectedCafes.has(cafe.id) ? 'selected' : ''}" data-id="${cafe.id}">
-                <div class="coffee-card-name">${escapeHtml(cafe.nom)}</div>
+                <div class="coffee-card-header">
+                    <div class="coffee-card-name">${escapeHtml(cafe.nom)}</div>
+                    <div class="coffee-card-pills">
+                        ${getTorrefactionPill(cafe.torrefaction)}
+                        ${cafe.label && cafe.label.toLowerCase().includes('bio') ? '<span class="pill pill-bio">Bio</span>' : ''}
+                        ${cafe.decafeine || (cafe.process && cafe.process.toLowerCase().includes('décaféiné')) ? '<span class="pill pill-deca">Déca</span>' : ''}
+                        ${cafe.fermente ? '<span class="pill pill-fermente">Fermenté</span>' : ''}
+                    </div>
+                </div>
                 <div class="coffee-card-origin">${escapeHtml(cafe.origine || 'Origine inconnue')}</div>
                 <div class="coffee-card-badges">
                     <span class="badge badge-statut ${getStatutClass(cafe.currentStatut)}">${cafe.currentStatut}</span>
-                    ${cafe.fermente ? '<span class="badge badge-fermente">Fermenté</span>' : ''}
                     ${cafe.score ? `<span class="badge badge-score">${cafe.score}</span>` : ''}
                 </div>
             </div>
@@ -358,6 +365,16 @@ const CaveCafeApp = (function() {
             case 'Entamé': return 'entame';
             case 'Fini': return 'fini';
             default: return 'stock';
+        }
+    }
+
+    function getTorrefactionPill(torrefaction) {
+        if (!torrefaction) return '<span class="pill pill-torref pill-tm">TM</span>';
+        switch (torrefaction) {
+            case 'Faible': return '<span class="pill pill-torref pill-tl">TL</span>';
+            case 'Forte': return '<span class="pill pill-torref pill-tf">TF</span>';
+            case 'Moyenne':
+            default: return '<span class="pill pill-torref pill-tm">TM</span>';
         }
     }
 
@@ -1397,6 +1414,7 @@ const CaveCafeApp = (function() {
             document.getElementById('edit-cafe-espece').value = existingCafe.espece || '';
             document.getElementById('edit-cafe-varietes').value = existingCafe.varietes || '';
             document.getElementById('edit-cafe-fermente').checked = existingCafe.fermente || false;
+            document.getElementById('edit-cafe-decafeine').checked = existingCafe.decafeine || false;
             document.getElementById('edit-cafe-saveurs').value = existingCafe.saveurs || '';
             document.getElementById('edit-cafe-famille').value = existingCafe.familleAromatique || '';
             document.getElementById('edit-cafe-intensite').value = existingCafe.intensite || '';
@@ -1431,6 +1449,7 @@ const CaveCafeApp = (function() {
             espece: document.getElementById('edit-cafe-espece').value.trim(),
             varietes: document.getElementById('edit-cafe-varietes').value.trim(),
             fermente: document.getElementById('edit-cafe-fermente').checked,
+            decafeine: document.getElementById('edit-cafe-decafeine').checked,
             saveurs: document.getElementById('edit-cafe-saveurs').value.trim(),
             familleAromatique: document.getElementById('edit-cafe-famille').value.trim(),
             intensite: document.getElementById('edit-cafe-intensite').value.trim(),
