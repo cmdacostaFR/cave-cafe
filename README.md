@@ -110,10 +110,13 @@ Pour gérer les doublons et supprimer des données :
 
 1. Allez dans ⚙️ → **Administration**
 2. Activez le **Mode Admin** (interrupteur)
-3. Fonctionnalités disponibles :
+3. En mode admin, chaque carte affiche :
+   - Une **checkbox "Sélectionner"** pour la suppression en masse
+   - Un **bouton "Ouvrir"** pour accéder au détail et aux dégustations
+4. Fonctionnalités disponibles :
    - **Modifier une fiche café** : bouton "Modifier cette fiche" dans le détail
    - **Dupliquer une fiche café** : créer une copie d'un café existant
-   - **Supprimer des cafés** : sélectionnez-les depuis la liste, puis "Supprimer la sélection"
+   - **Supprimer des cafés** : cochez les cartes, puis "Supprimer la sélection"
    - **Rechercher les doublons** : détecte les cafés avec des noms similaires
    - **Modifier/Supprimer une dégustation** : boutons ✎ et × sur chaque dégustation
    - **Créer un nouveau café** : bouton "Nouveau café" dans les paramètres
@@ -247,6 +250,11 @@ convert -background none icons/icon.svg -resize 512x512 icons/icon-512.png
 
 ## Historique des versions
 
+### Version 2.4 (Novembre 2026)
+- **Mode Admin amélioré** : barre d'administration sur chaque carte avec checkbox + bouton "Ouvrir"
+- Accès direct au détail et aux dégustations même en mode admin
+- Pastilles repositionnées sous le nom pour une meilleure lisibilité
+
 ### Version 2.3 (Novembre 2026)
 - **Pastilles visuelles** sur les cartes : TL/TM/TF (torréfaction), Bio, Déca, Fermenté
 - Ajout du champ "Décaféiné" dans le formulaire d'édition
@@ -277,6 +285,6 @@ MIT License - Libre d'utilisation et de modification.
 
 ---
 
-**Version** : 2.3  
+**Version** : 2.4  
 **Auteur** : Cave à Café  
 **Date** : Novembre 2026
